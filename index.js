@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 
 const mongodb = require('mongodb');
 
+const ObjectId = mongodb.ObjectId;
+
 (async () => {
 
 const connectionString = 'mongodb://localhost:27017';
@@ -79,29 +81,39 @@ app.post('/mensagem', async (req, res) => { // Criar uma mensagem na lista de me
 })
 
 // Read Single
-app.get('/mensagem/:id', (req, res) => {
+app.get('/mensagem/:id', async (req, res) => {
     const id = req.params.id;
 
-    const mensagem = mensagens[id - 1];
+    const mensagem = await mensagens.findOne( { _id: ObjectId(id) });
 
     res.send(mensagem);
 });
 
 // Update
-app.put('/mensagem/:id', (req, res) => {
+app.put('/mensagem/:id', async (req, res) => {
     const id = req.params.id;
     const texto = req.body.texto;
 
-    mensagens[id - 1].texto = texto;
+    const mensagem = {
+        _id: ObjectId(id),
+        texto
+    };
 
-    res.send(`A mensagem '${texto}' com o Id ${id} foi atualizada com sucesso.`);
+    await mensagens.updateOne(
+        { _id: ObjectId(id) },
+        { $set: mensagem }
+    );
+
+    res.send(mensagem);
 });
 
 // Delete
-app.delete('/mensagem/:id', (req, res) => {
+app.delete('/mensagem/:id', async (req, res) => {
     const id = req.params.id;
 
-    delete mensagens[id - 1];
+    await mensagens.deleteOne(
+        { _id: ObjectId(id) }
+    );
 
     res.send(`A mensagem com o Id ${id} foi removida com sucesso.`);
 });
